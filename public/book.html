@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="da" class="">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Book – BudgetBuddy</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            background: 'hsl(var(--background))',
+            foreground: 'hsl(var(--foreground))',
+            card: 'hsl(var(--card))',
+            muted: {
+              DEFAULT: 'hsl(var(--muted))',
+              foreground: 'hsl(var(--muted-foreground))',
+            },
+            border: 'hsl(var(--border))',
+          },
+          borderRadius: { '2xl': '1rem' },
+        },
+      },
+    };
+  </script>
+
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+
+  <style>
+    :root {
+      --background: 0 0% 100%;
+      --foreground: 240 10% 3.9%;
+      --card: 0 0% 100%;
+      --muted: 240 4.8% 95.9%;
+      --muted-foreground: 240 3.8% 46.1%;
+      --border: 240 5.9% 90%;
+    }
+    .dark {
+      --background: 240 10% 3.9%;
+      --foreground: 0 0% 98%;
+      --card: 240 10% 3.9%;
+      --muted: 240 3.7% 15.9%;
+      --muted-foreground: 240 5% 64.9%;
+      --border: 240 3.7% 15.9%;
+    }
+    body { background-color: hsl(var(--background)); color: hsl(var(--foreground)); }
+    input, textarea {
+      background-color: hsl(var(--background));
+      color: hsl(var(--foreground));
+      border: 1px solid hsl(var(--border));
+      border-radius: 1rem;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.875rem;
+      outline: none;
+      width: 100%;
+    }
+    input:focus, textarea:focus { box-shadow: 0 0 0 2px hsl(var(--foreground) / 0.2); }
+    textarea { min-height: 120px; resize: vertical; }
+  </style>
+</head>
+
+<body class="min-h-screen bg-background text-foreground">
+
+  <!-- Header -->
+  <header class="border-b border-[hsl(var(--border))] bg-background/80 backdrop-blur">
+    <div class="mx-auto flex max-w-4xl items-center justify-between px-4 py-3">
+      <a href="/" class="flex items-center gap-2">
+        <div class="flex h-9 w-9 items-center justify-center rounded-2xl border border-[hsl(var(--border))] shadow-sm">
+          <i data-lucide="wallet" class="h-5 w-5"></i>
+        </div>
+        <div class="leading-tight">
+          <div class="font-semibold">BudgetBuddy</div>
+          <div class="text-xs text-muted-foreground">Budget & overblik</div>
+        </div>
+      </a>
+      <button onclick="history.back()" class="inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium hover:bg-[hsl(var(--muted))] transition-colors">
+        <i data-lucide="arrow-left" class="h-4 w-4"></i> Tilbage
+      </button>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-4xl px-4 py-12">
+    <div class="grid gap-8 md:grid-cols-2">
+
+      <!-- Plan summary -->
+      <div>
+        <div class="text-sm text-muted-foreground">Du har valgt</div>
+        <h1 id="plan-title" class="mt-1 text-3xl font-semibold">Starter-pakken</h1>
+        <div id="plan-price" class="mt-1 text-lg text-muted-foreground">149 kr./md · Inkl. moms</div>
+
+        <div class="mt-6 rounded-2xl border border-[hsl(var(--border))] bg-background/60 p-5 shadow-sm">
+          <div class="font-semibold mb-3">Hvad er inkluderet:</div>
+          <div id="plan-highlights" class="grid gap-2 text-sm"></div>
+        </div>
+
+        <div class="mt-4 rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--muted))]/20 p-4 text-sm text-muted-foreground">
+          Ikke den rigtige pakke?
+          <a href="/#pricing" class="font-medium text-foreground hover:underline">Se alle priser</a>
+        </div>
+      </div>
+
+      <!-- Form -->
+      <div class="rounded-2xl border border-[hsl(var(--border))] bg-card shadow-sm p-6">
+        <div id="form-title" class="text-lg font-semibold mb-1">Book Starter-pakken</div>
+        <div class="text-sm text-muted-foreground mb-4">Udfyld formularen, så kontakter vi dig for at aftale det næste skridt.</div>
+
+        <!-- Success state -->
+        <div id="form-success" class="hidden rounded-2xl border border-[hsl(var(--border))] bg-background/60 p-5">
+          <div class="flex items-center gap-2 font-semibold mb-2">
+            <i data-lucide="check" class="h-5 w-5"></i> Tak! Vi vender tilbage hurtigst muligt.
+          </div>
+          <div class="text-sm text-muted-foreground mb-4">
+            Tip: Skriv evt. hvilke faste udgifter du har (husleje, lån, forsikring) – så kan vi forberede os.
+          </div>
+          <a href="/" class="inline-flex items-center gap-2 rounded-md border border-[hsl(var(--border))] bg-background/60 px-4 py-2 text-sm font-medium hover:bg-[hsl(var(--muted))]/30 transition-colors">
+            Tilbage til forsiden
+          </a>
+        </div>
+
+        <!-- Form -->
+        <form id="booking-form" class="space-y-3">
+          <div>
+            <div class="text-sm font-medium mb-1">Navn</div>
+            <input type="text" id="field-name" placeholder="Dit navn" required />
+          </div>
+          <div>
+            <div class="text-sm font-medium mb-1">E-mail</div>
+            <input type="email" id="field-email" placeholder="navn@mail.dk" required />
+          </div>
+          <div>
+            <div class="text-sm font-medium mb-1">Hvad vil du have hjælp til?</div>
+            <textarea id="field-message" placeholder="Fx: Vi vil lave et fælles budget, spare op til ferie og få styr på vores variable forbrug." required></textarea>
+          </div>
+          <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between pt-1">
+            <div class="text-xs text-muted-foreground">Ved at sende accepterer du vores privatlivspolitik.</div>
+            <button type="submit" class="inline-flex items-center gap-2 rounded-md bg-foreground px-4 py-2 text-sm font-medium text-background hover:opacity-90 transition-opacity">
+              Send <i data-lucide="arrow-right" class="h-4 w-4"></i>
+            </button>
+          </div>
+        </form>
+      </div>
+
+    </div>
+  </main>
+
+  <script>
+    // Apply saved theme
+    (function () {
+      const saved = localStorage.getItem('theme');
+      if (saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark');
+      }
+    })();
+
+    // Plan data
+    const plans = {
+      starter: {
+        label: 'Starter',
+        price: '149 kr./md',
+        highlights: ['Budgetskabelon + kategorier', '1 behovs-call (30 min)', 'Budget + gennemgang', 'Ingen opfølgning'],
+      },
+      plus: {
+        label: 'Plus',
+        price: '299 kr./md',
+        highlights: ['Alt i Starter', 'Gennemgang (30–45 min)', 'Opfølgning efter 2–4 uger', 'Gæld/opsparing-plan', 'Support i 60 dage'],
+      },
+      pro: {
+        label: 'Pro',
+        price: '599 kr./md',
+        highlights: ['Alt i Plus', 'Ekstra opfølgning', 'Finpudsning af forbrugsvaner', 'Support i 30 dage'],
+      },
+    };
+
+    // Read plan from URL
+    const pathParts = window.location.pathname.split('/');
+    const planKey = pathParts[pathParts.length - 1].toLowerCase();
+    const plan = plans[planKey] || plans.starter;
+
+    document.getElementById('plan-title').textContent = plan.label + '-pakken';
+    document.getElementById('plan-price').textContent = plan.price + ' · Inkl. moms';
+    document.getElementById('form-title').textContent = 'Book ' + plan.label + '-pakken';
+
+    const hl = document.getElementById('plan-highlights');
+    plan.highlights.forEach(h => {
+      hl.innerHTML += `<div class="flex items-center gap-2"><i data-lucide="check" class="h-4 w-4"></i> ${h}</div>`;
+    });
+
+    // Form submit
+    document.getElementById('booking-form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      document.getElementById('booking-form').classList.add('hidden');
+      document.getElementById('form-success').classList.remove('hidden');
+      lucide.createIcons();
+    });
+  </script>
+
+  <script>lucide.createIcons();</script>
+</body>
+</html>

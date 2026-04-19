@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="da" class="">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BudgetBuddy – Budget & overblik</title>
+
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            background: 'hsl(var(--background))',
+            foreground: 'hsl(var(--foreground))',
+            card: 'hsl(var(--card))',
+            muted: {
+              DEFAULT: 'hsl(var(--muted))',
+              foreground: 'hsl(var(--muted-foreground))',
+            },
+            border: 'hsl(var(--border))',
+          },
+          borderRadius: { '2xl': '1rem', '3xl': '1.5rem' },
+        },
+      },
+    };
+  </script>
+
+  <!-- Lucide icons -->
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+
+  <style>
+    :root {
+      --background: 0 0% 100%;
+      --foreground: 240 10% 3.9%;
+      --card: 0 0% 100%;
+      --muted: 240 4.8% 95.9%;
+      --muted-foreground: 240 3.8% 46.1%;
+      --border: 240 5.9% 90%;
+    }
+    .dark {
+      --background: 240 10% 3.9%;
+      --foreground: 0 0% 98%;
+      --card: 240 10% 3.9%;
+      --muted: 240 3.7% 15.9%;
+      --muted-foreground: 240 5% 64.9%;
+      --border: 240 3.7% 15.9%;
+    }
+    body { background-color: hsl(var(--background)); color: hsl(var(--foreground)); }
+    .border-color { border-color: hsl(var(--border)); }
+    /* fade-up animation */
+    .fade-up { opacity: 0; transform: translateY(14px); transition: opacity 0.55s ease, transform 0.55s ease; }
+    .fade-up.visible { opacity: 1; transform: translateY(0); }
+    /* mobile menu */
+    #mobile-menu { display: none; }
+    #mobile-menu.open { display: block; }
+    /* solution detail panels */
+    .solution-detail { display: none; }
+    .solution-detail.open { display: block; }
+  </style>
+</head>
+
+<body class="min-h-screen bg-background text-foreground">
+
+  <!-- ───────────────────────── HEADER ───────────────────────── -->
+  <header class="sticky top-0 z-50 border-b border-[hsl(var(--border))] bg-background/80 backdrop-blur">
+    <div class="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
+
+      <!-- Logo -->
+      <a href="#" class="flex items-center gap-2">
+        <div class="flex h-9 w-9 items-center justify-center rounded-2xl border border-[hsl(var(--border))] shadow-sm">
+          <i data-lucide="wallet" class="h-5 w-5"></i>
+        </div>
+        <div class="leading-tight">
+          <div class="font-semibold">BudgetBuddy</div>
+          <div class="text-xs text-muted-foreground">Budget & overblik</div>
+        </div>
+      </a>
+
+      <!-- Desktop nav -->
+      <nav class="hidden items-center gap-6 md:flex">
+        <a href="#solution" class="text-sm text-muted-foreground hover:text-foreground">Løsninger</a>
+        <a href="#examples" class="text-sm text-muted-foreground hover:text-foreground">Eksempler</a>
+        <a href="#how" class="text-sm text-muted-foreground hover:text-foreground">Sådan virker det</a>
+        <a href="#pricing" class="text-sm text-muted-foreground hover:text-foreground">Priser</a>
+        <a href="#faq" class="text-sm text-muted-foreground hover:text-foreground">FAQ</a>
+        <a href="#contact" class="text-sm text-muted-foreground hover:text-foreground">Kontakt</a>
+      </nav>
+
+      <!-- Right buttons -->
+      <div class="flex items-center gap-2">
+        <a href="#contact" class="hidden sm:inline-flex items-center rounded-md px-3 py-2 text-sm font-medium hover:bg-[hsl(var(--muted))] transition-colors">Kontakt</a>
+        <a href="#contact" class="hidden sm:inline-flex items-center gap-2 rounded-md bg-foreground px-4 py-2 text-sm font-medium text-background hover:opacity-90 transition-opacity">
+          Book en budgetsamtale <i data-lucide="arrow-right" class="h-4 w-4"></i>
+        </a>
+
+        <!-- Theme toggle -->
+        <button id="theme-toggle" aria-label="Skift tema" class="flex h-9 w-9 items-center justify-center rounded-2xl border border-[hsl(var(--border))] bg-background hover:bg-[hsl(var(--muted))] transition-colors">
+          <i data-lucide="sun" id="icon-sun" class="h-4 w-4 block dark:hidden"></i>
+          <i data-lucide="moon" id="icon-moon" class="h-4 w-4 hidden dark:block"></i>
+        </button>
+
+        <!-- Mobile menu button -->
+        <button id="mobile-toggle" aria-label="Menu" class="flex h-9 w-9 items-center justify-center rounded-2xl border border-[hsl(var(--border))] bg-background md:hidden hover:bg-[hsl(var(--muted))] transition-colors">
+          <i data-lucide="menu" id="icon-menu" class="h-4 w-4"></i>
+          <i data-lucide="x" id="icon-close" class="h-4 w-4 hidden"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile drawer -->
+    <div id="mobile-menu" class="md:hidden border-t border-[hsl(var(--border))] bg-background/95 backdrop-blur">
+      <div class="mx-auto max-w-6xl px-4 py-3">
+        <div class="grid gap-2">
+          <a href="#solution" class="mobile-link rounded-2xl border border-[hsl(var(--border))] bg-background/60 px-4 py-3 text-sm font-medium shadow-sm hover:bg-[hsl(var(--muted))]/30">Løsninger</a>
+          <a href="#examples" class="mobile-link rounded-2xl border border-[hsl(var(--border))] bg-background/60 px-4 py-3 text-sm font-medium shadow-sm hover:bg-[hsl(var(--muted))]/30">Eksempler</a>
+          <a href="#how" class="mobile-link rounded-2xl border border-[hsl(var(--border))] bg-background/60 px-4 py-3 text-sm font-medium shadow-sm hover:bg-[hsl(var(--muted))]/30">Sådan virker det</a>
+          <a href="#pricing" class="mobile-link rounded-2xl border border-[hsl(var(--border))] bg-background/60 px-4 py-3 text-sm font-medium shadow-sm hover:bg-[hsl(var(--muted))]/30">Priser</a>
+          <a href="#faq" class="mobile-link rounded-2xl border border-[hsl(var(--border))] bg-background/60 px-4 py-3 text-sm font-medium shadow-sm hover:bg-[hsl(var(--muted))]/30">FAQ</a>
+          <a href="#contact" class="mobile-link inline-flex items-center justify-center gap-2 rounded-2xl bg-foreground px-4 py-3 text-sm font-medium text-background">
+            Book en budgetsamtale <i data-lucide="arrow-right" class="h-4 w-4"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+
+  <!-- ───────────────────────── HERO ───────────────────────── -->
+  <section class="relative overflow-hidden">
+    <div class="pointer-events-none absolute inset-0 opacity-70">
+      <div class="absolute -top-40 left-1/2 h-[520px] w-[520px] -translate-x-1/2 rounded-full bg-[hsl(var(--muted))] blur-3xl"></div>
+      <div class="absolute -bottom-40 right-[-120px] h-[420px] w-[420px] rounded-full bg-[hsl(var(--muted))] blur-3xl"></div>
+    </div>
+
+    <div class="mx-auto grid max-w-6xl gap-10 px-4 py-16 md:grid-cols-2 md:py-20">
+
+      <!-- Left column -->
+      <div class="fade-up relative">
+        <span class="mb-4 inline-flex items-center gap-2 rounded-2xl border border-[hsl(var(--border))] bg-foreground px-3 py-1 text-xs font-semibold text-background">
+          <i data-lucide="sparkles" class="h-4 w-4"></i>
+          Få styr på budgettet – uden at det føles som arbejde.
+        </span>
+        <h1 class="text-4xl font-semibold tracking-tight md:text-5xl">
+          Budget-hjælp der faktisk virker i hverdagen
+        </h1>
+        <p class="mt-4 max-w-xl text-base text-muted-foreground md:text-lg">
+          Vi hjælper private og familier med at få overblik, lægge realistiske budgetter og bygge en plan der holder – måned efter måned.
+        </p>
+
+        <div class="mt-7 flex flex-col gap-3 sm:flex-row">
+          <a href="#contact" class="inline-flex items-center justify-center gap-2 rounded-md bg-foreground px-6 py-3 text-sm font-medium text-background hover:opacity-90 transition-opacity">
+            Book en budgetsamtale <i data-lucide="arrow-right" class="h-4 w-4"></i>
+          </a>
+          <a href="#how" class="inline-flex items-center justify-center gap-2 rounded-md border border-[hsl(var(--border))] bg-background/60 px-6 py-3 text-sm font-medium hover:bg-[hsl(var(--muted))]/30 transition-colors">
+            Se hvordan det virker
+          </a>
+        </div>
+
+        <div class="mt-8 grid max-w-xl grid-cols-3 gap-3">
+          <div class="rounded-2xl border border-[hsl(var(--border))] bg-background/60 p-3 text-sm shadow-sm">
+            <div class="flex items-center gap-2">
+              <i data-lucide="badge-check" class="h-4 w-4"></i>
+              <span class="font-medium">Online forløb</span>
+            </div>
+          </div>
+          <div class="rounded-2xl border border-[hsl(var(--border))] bg-background/60 p-3 text-sm shadow-sm">
+            <div class="flex items-center gap-2">
+              <i data-lucide="badge-check" class="h-4 w-4"></i>
+              <span class="font-medium">Skåret til dit liv</span>
+            </div>
+          </div>
+          <div class="rounded-2xl border border-[hsl(var(--border))] bg-background/60 p-3 text-sm shadow-sm">
+            <div class="flex items-center gap-2">
+              <i data-lucide="badge-check" class="h-4 w-4"></i>
+              <span class="font-medium">Trygt & fortroligt</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right column: preview card -->
+      <div class="fade-up relative" style="transition-delay:0.08s">
+        <div class="rounded-2xl border border-[hsl(var(--border))] bg-card shadow-sm p-6">
+          <div class="flex items-center gap-2 text-base font-semibold mb-4">
+            <i data-lucide="line-chart" class="h-5 w-5"></i> Dit budget i praksis
+          </div>
+          <div class="space-y-4">
+            <div class="rounded-2xl border border-[hsl(var(--border))] p-4">
+              <div class="flex items-start justify-between gap-3">
+                <div>
+                  <div class="text-sm text-muted-foreground">Månedligt rådighedsbeløb</div>
+                  <div class="text-2xl font-semibold">2.850 kr.</div>
+                </div>
+                <span class="inline-flex items-center rounded-2xl border border-[hsl(var(--border))] bg-foreground px-2.5 py-0.5 text-xs font-semibold text-background">+420 kr.</span>
+              </div>
+              <div class="mt-3 text-sm text-muted-foreground">
+                Efter husleje, faste udgifter, mad, transport og opsparing.
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div class="rounded-2xl border border-[hsl(var(--border))] p-4">
+                <div class="flex items-center gap-2 text-sm font-medium">
+                  <i data-lucide="calculator" class="h-4 w-4"></i> Automatiske kategorier
+                </div>
+                <p class="mt-2 text-sm text-muted-foreground">Vi opdeler udgifter i realistiske poster – så det er nemt at følge.</p>
+              </div>
+              <div class="rounded-2xl border border-[hsl(var(--border))] p-4">
+                <div class="flex items-center gap-2 text-sm font-medium">
+                  <i data-lucide="file-text" class="h-4 w-4"></i> Handlingsplan
+                </div>
+                <p class="mt-2 text-sm text-muted-foreground">3 konkrete greb der giver luft i økonomien allerede denne måned.</p>
+              </div>
+            </div>
+
+            <div class="rounded-2xl border border-[hsl(var(--border))] p-4">
+              <div class="flex items-center gap-2 text-sm font-medium">
+                <i data-lucide="lock" class="h-4 w-4"></i> Fortroligt & sikkert
+              </div>
+              <p class="mt-2 text-sm text-muted-foreground">Vi deler aldrig dine data. Du bestemmer selv, hvor detaljeret du vil gå.</p>
+            </div>
+
+            <div class="flex items-center justify-between rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--muted))]/30 p-4">
+              <div class="text-sm">
+                <div class="font-medium">Indledende budgetsamtale (15 min)</div>
+                <div class="text-muted-foreground">Få en hurtig plan og næste skridt</div>
+              </div>
+              <a href="#contact" class="inline-flex items-center gap-2 rounded-md bg-foreground px-4 py-2 text-sm font-medium text-background hover:opacity-90 transition-opacity">
+                Book <i data-lucide="arrow-right" class="h-4 w-4"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ───────────────────────── SOCIAL PROOF ───────────────────────── -->
+  <section class="border-y border-[hsl(var(--border))] bg-[hsl(var(--muted))]/20">
+    <div class="mx-auto max-w-6xl px-4 py-10">
+      <div class="fade-up flex flex-col gap-4">
+        <div class="text-sm text-muted-foreground">Brugt af privatpersoner, par og familier der vil have ro i økonomien</div>
+        <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div class="rounded-2xl border border-[hsl(var(--border))] bg-background/60 px-4 py-3 text-center text-sm font-medium shadow-sm">Par</div>
+          <div class="rounded-2xl border border-[hsl(var(--border))] bg-background/60 px-4 py-3 text-center text-sm font-medium shadow-sm">Familier</div>
+          <div class="rounded-2xl border border-[hsl(var(--border))] bg-background/60 px-4 py-3 text-center text-sm font-medium shadow-sm">Studerende</div>
+          <div class="rounded-2xl border border-[hsl(var(--border))] bg-background/60 px-4 py-3 text-center text-sm font-medium shadow-sm">Selvstændige</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ───────────────────────── SOLUTIONS ───────────────────────── -->
+  <section id="solution" class="mx-auto max-w-6xl px-4 py-16">
+    <div class="fade-up max-w-2xl">
+      <h2 class="text-3xl font-semibold tracking-tight">Vores løsninger</h2>
+      <p class="mt-3 text-muted-foreground">Klik på en løsning for at læse mere. Vi guider dig til den, der passer bedst til din situation.</p>
+    </div>
+
+    <div class="mt-10 grid gap-4 md:grid-cols-3">
+
+      <!-- Card: Overblik -->
+      <div class="fade-up" style="transition-delay:0.0s">
+        <div class="solution-card h-full rounded-2xl border border-[hsl(var(--border))] bg-card shadow-sm transition hover:shadow-md cursor-pointer" data-solution="overblik">
+          <div class="p-6">
+            <div class="flex items-center justify-between gap-3 mb-3">
+              <div class="flex items-center gap-2 font-semibold">
+                <i data-lucide="wallet" class="h-5 w-5"></i> Overblik & struktur
+              </div>
+              <span class="text-sm text-muted-foreground">Læs mere →</span>
+            </div>
+            <div class="text-sm text-muted-foreground mb-3">Få et budget der er let at følge – med klare kategorier og realistiske beløb.</div>
+            <div class="flex flex-wrap gap-2 mb-3">
+              <span class="inline-flex rounded-2xl border border-[hsl(var(--border))] px-2.5 py-0.5 text-xs font-semibold bg-[hsl(var(--muted))] text-muted-foreground">Budgetskabelon</span>
+              <span class="inline-flex rounded-2xl border border-[hsl(var(--border))] px-2.5 py-0.5 text-xs font-semibold bg-[hsl(var(--muted))] text-muted-foreground">Faste/variable udgifter</span>
+              <span class="inline-flex rounded-2xl border border-[hsl(var(--border))] px-2.5 py-0.5 text-xs font-semibold bg-[hsl(var(--muted))] text-muted-foreground">Rådighedsbeløb</span>
+            </div>
+            <div class="grid gap-1 text-sm">
+              <div class="text-muted-foreground"><span class="font-medium text-foreground">Hvem:</span> Til dig der vil have ro og kontrol</div>
+              <div class="text-muted-foreground"><span class="font-medium text-foreground">Resultat:</span> Du ved præcis hvad du kan bruge hver måned.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card: Forbrug -->
+      <div class="fade-up" style="transition-delay:0.04s">
+        <div class="solution-card h-full rounded-2xl border border-[hsl(var(--border))] bg-card shadow-sm transition hover:shadow-md cursor-pointer" data-solution="vaner">
+          <div class="p-6">
+            <div class="flex items-center justify-between gap-3 mb-3">
+              <div class="flex items-center gap-2 font-semibold">
+                <i data-lucide="credit-card" class="h-5 w-5"></i> Forbrug & vaner
+              </div>
+              <span class="text-sm text-muted-foreground">Læs mere →</span>
+            </div>
+            <div class="text-sm text-muted-foreground mb-3">Find lækager og få ændringer der giver effekt uden at føles som afsavn.</div>
+            <div class="flex flex-wrap gap-2 mb-3">
+              <span class="inline-flex rounded-2xl border border-[hsl(var(--border))] px-2.5 py-0.5 text-xs font-semibold bg-[hsl(var(--muted))] text-muted-foreground">Forbrugsanalyse</span>
+              <span class="inline-flex rounded-2xl border border-[hsl(var(--border))] px-2.5 py-0.5 text-xs font-semibold bg-[hsl(var(--muted))] text-muted-foreground">Små greb med stor effekt</span>
+              <span class="inline-flex rounded-2xl border border-[hsl(var(--border))] px-2.5 py-0.5 text-xs font-semibold bg-[hsl(var(--muted))] text-muted-foreground">En plan du kan holde</span>
+            </div>
+            <div class="grid gap-1 text-sm">
+              <div class="text-muted-foreground"><span class="font-medium text-foreground">Hvem:</span> Til dig der føler pengene 'forsvinder'</div>
+              <div class="text-muted-foreground"><span class="font-medium text-foreground">Resultat:</span> Du får mere luft – uden at leve stramt.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card: Tryg plan -->
+      <div class="fade-up" style="transition-delay:0.08s">
+        <div class="solution-card h-full rounded-2xl border border-[hsl(var(--border))] bg-card shadow-sm transition hover:shadow-md cursor-pointer" data-solution="plan">
+          <div class="p-6">
+            <div class="flex items-center justify-between gap-3 mb-3">
+              <div class="flex items-center gap-2 font-semibold">
+                <i data-lucide="shield" class="h-5 w-5"></i> Tryg plan fremad
+              </div>
+              <span class="text-sm text-muted-foreground">Læs mere →</span>
+            </div>
+            <div class="text-sm text-muted-foreground mb-3">Opsparing, buffer, gæld og mål – i en simpel plan der kan tilpasses.</div>
+            <div class="flex flex-wrap gap-2 mb-3">
+              <span class="inline-flex rounded-2xl border border-[hsl(var(--border))] px-2.5 py-0.5 text-xs font-semibold bg-[hsl(var(--muted))] text-muted-foreground">Buffer & opsparing</span>
+              <span class="inline-flex rounded-2xl border border-[hsl(var(--border))] px-2.5 py-0.5 text-xs font-semibold bg-[hsl(var(--muted))] text-muted-foreground">Gældsstrategi</span>
+              <span class="inline-flex rounded-2xl border border-[hsl(var(--border))] px-2.5 py-0.5 text-xs font-semibold bg-[hsl(var(--muted))] text-muted-foreground">Mål (rejse, bolig, mv.)</span>
+            </div>
+            <div class="grid gap-1 text-sm">
+              <div class="text-muted-foreground"><span class="font-medium text-foreground">Hvem:</span> Til dig der vil bygge en plan for fremtiden</div>
+              <div class="text-muted-foreground"><span class="font-medium text-foreground">Resultat:</span> Du har en retning og et system, der kan justeres.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Solution detail panels -->
+    <div class="mt-8">
+      <!-- Default hint -->
+      <div id="solution-hint" class="rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--muted))]/20 p-6 text-sm text-muted-foreground">
+        Vælg en løsning ovenfor for at se detaljer.
+      </div>
+
+      <!-- Overblik detail -->
+      <div id="detail-overblik" class="solution-detail rounded-2xl border border-[hsl(var(--border))] bg-background/60 p-6 shadow-sm">
+        <div class="grid gap-6 md:grid-cols-2">
+          <div>
+            <div class="text-sm text-muted-foreground">Løsning</div>
+            <div class="mt-1 text-2xl font-semibold">Overblik & struktur</div>
+            <p class="mt-3 text-sm text-muted-foreground">Vi bygger et budget, der er nemt at følge i hverdagen. Du får kategorier, beløb og en enkel metode til at holde styr på forbrug – uden regneark-stress.</p>
+            <div class="mt-5 flex flex-col gap-2 sm:flex-row">
+              <a href="#pricing" class="inline-flex items-center justify-center gap-2 rounded-md bg-foreground px-4 py-2 text-sm font-medium text-background hover:opacity-90 transition-opacity">
+                Se priser <i data-lucide="arrow-right" class="h-4 w-4"></i>
+              </a>
+              <a href="#contact" class="inline-flex items-center justify-center gap-2 rounded-md border border-[hsl(var(--border))] bg-background/60 px-4 py-2 text-sm font-medium hover:bg-[hsl(var(--muted))]/30 transition-colors">
+                Book budgetsamtale
+              </a>
+            </div>
+          </div>
+          <div class="rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--muted))]/20 p-5">
+            <div class="font-semibold">Du får:</div>
+            <div class="mt-3 grid gap-2 text-sm">
+              <div class="flex items-center gap-2"><i data-lucide="check" class="h-4 w-4"></i> Budgetskabelon klar til brug</div>
+              <div class="flex items-center gap-2"><i data-lucide="check" class="h-4 w-4"></i> Kategori-setup der giver mening</div>
+              <div class="flex items-center gap-2"><i data-lucide="check" class="h-4 w-4"></i> Rådighedsbeløb du kan stole på</div>
+              <div class="flex items-center gap-2"><i data-lucide="check" class="h-4 w-4"></i> En simpel rutine (5 min/uge)</div>
+            </div>
+          </div>
+        </div>
+        <div class="mt-6 flex items-center justify-between rounded-2xl border border-[hsl(var(--border))] bg-background/60 p-4">
+          <div class="text-sm">
+            <div class="font-medium">Ikke sikker på hvad du skal vælge?</div>
+            <div class="text-muted-foreground">Budgetsamtale er inkluderet i alle pakker – så finder vi den rigtige løsning.</div>
+          </div>
+          <a href="#contact" class="inline-flex items-center gap-2 rounded-md bg-foreground px-4 py-2 text-sm font-medium text-background hover:opacity-90 transition-opacity">
+            Book <i data-lucide="arrow-right" class="h-4 w-4"></i>
+          </a>
+        </div>
+      </div>
+
+      <!-- Vaner detail -->
+      <div id="detail-vaner" class="solution-detail rounded-2xl border border-[hsl(var(--border))] bg-background/60 p-6 shadow-sm">
+        <div class="grid gap-6 md:grid-cols-2">
+          <div>
+            <div class="text-sm text-muted-foreground">Løsning</div>
+            <div class="mt-1 text-2xl font-semibold">Forbrug & vaner</div>
+            <p class="mt-3 text-sm text-muted-foreground">Vi finder de steder, hvor økonomien "lækker" – og vælger 2–3 ændringer, der er realistiske. Fokus er ikke afsavn, men smartere valg.</p>
+            <div class="mt-5 flex flex-col gap-2 sm:flex-row">
+              <a href="#pricing" class="inline-flex items-center justify-center gap-2 rounded-md bg-foreground px-4 py-2 text-sm font-medium text-background hover:opacity-90 transition-opacity">
+                Se priser <i data-lucide="arrow-right" class="h-4 w-4"></i>
+              </a>
+              <a href="#contact" class="inline-flex items-center justify-center gap-2 rounded-md border border-[hsl(var(--border))] bg-background/60 px-4 py-2 text-sm font-medium hover:bg-[hsl(var(--muted))]/30 transition-colors">
+                Book budgetsamtale
+              </a>
+            </div>
+          </div>
+          <div class="rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--muted))]/20 p-5">
+            <div class="font-semibold">Du får:</div>
+            <div class="mt-3 grid gap-2 text-sm">
+              <div class="flex items-center gap-2"><i data-lucide="check" class="h-4 w-4"></i> Kort forbrugsanalyse</div>
+              <div class="flex items-center gap-2"><i data-lucide="check" class="h-4 w-4"></i> 2–3 hurtige besparelser</div>
+              <div class="flex items-center gap-2"><i data-lucide="check" class="h-4 w-4"></i> Nye kategorier/rammer</div>
+              <div class="flex items-center gap-2"><i data-lucide="check" class="h-4 w-4"></i> Plan for 'sjove penge' (så det holder)</div>
+            </div>
+          </div>
+        </div>
+        <div class="mt-6 flex items-center justify-between rounded-2xl border border-[hsl(var(--border))] bg-background/60 p-4">
+          <div class="text-sm">
+            <div class="font-medium">Ikke sikker på hvad du skal vælge?</div>
+            <div class="text-muted-foreground">Budgetsamtale er inkluderet i alle pakker – så finder vi den rigtige løsning.</div>
+          </div>
+          <a href="#contact" class="inline-flex items-center gap-2 rounded-md bg-foreground px-4 py-2 text-sm font-medium text-background hover:opacity-90 transition-opacity">
+            Book <i data-lucide="arrow-right" class="h-4 w-4"></i>
+          </a>
+        </div>
+      </div>
+
+      <!-- Plan detail -->
+      <div id="detail-plan" class="solution-detail rounded-2xl border border-[hsl(var(--border))] bg-background/60 p-6 shadow-sm">
+        <div class="grid gap-6 md:grid-cols-2">
+          <div>
+            <div class="text-sm text-muted-foreground">Løsning</div>
+            <div class="mt-1 text-2xl font-semibold">Tryg plan fremad</div>
+            <p class="mt-3 text-sm text-muted-foreground">Når budgettet fungerer, kan vi bygge en plan: buffer, opsparing, gæld og mål – og hvordan du holder det stabilt over tid.</p>
+            <div class="mt-5 flex flex-col gap-2 sm:flex-row">
+              <a href="#pricing" class="inline-flex items-center justify-center gap-2 rounded-md bg-foreground px-4 py-2 text-sm font-medium text-background hover:opacity-90 transition-opacity">
+                Se priser <i data-lucide="arrow-right" class="h-4 w-4"></i>
+              </a>
+              <a href="#contact" class="inline-flex items-center justify-center gap-2 rounded-md border border-[hsl(var(--border))] bg-background/60 px-4 py-2 text-sm font-medium hover:bg-[hsl(var(--muted))]/30 transition-colors">
+                Book budgetsamtale
+              </a>
+            </div>
+          </div>
+          <div class="rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--muted))]/20 p-5">
+            <div class="font-semibold">Du får:</div>
+            <div class="mt-3 grid gap-2 text-sm">
+              <div class="flex items-center gap-2"><i data-lucide="check" class="h-4 w-4"></i> Buffer & sikkerhedsnet</div>
+              <div class="flex items-center gap-2"><i data-lucide="check" class="h-4 w-4"></i> Opsparing til mål</div>
+              <div class="flex items-center gap-2"><i data-lucide="check" class="h-4 w-4"></i> Gældsstrategi (hvis relevant)</div>
+              <div class="flex items-center gap-2"><i data-lucide="check" class="h-4 w-4"></i> Opfølgning + justering</div>
+            </div>
+          </div>
+        </div>
+        <div class="mt-6 flex items-center justify-between rounded-2xl border border-[hsl(var(--border))] bg-background/60 p-4">
+          <div class="text-sm">
+            <div class="font-medium">Ikke sikker på hvad du skal vælge?</div>
+            <div class="text-muted-foreground">Budgetsamtale er inkluderet i alle pakker – så finder vi den rigtige løsning.</div>
+          </div>
+          <a href="#contact" class="inline-flex items-center gap-2 rounded-md bg-foreground px-4 py-2 text-sm font-medium text-background hover:opacity-90 transition-opacity">
+            Book <i data-lucide="arrow-right" class="h-4 w-4"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ───────────────────────── EXAMPLES ───────────────────────── -->
+  <section id="examples" class="mx-auto max-w-6xl px-4 py-16">
+    <div class="fade-up max-w-2xl">
+      <h2 class="text-3xl font-semibold tracking-tight">Eksempler fra hverdagen</h2>
+      <p class="mt-3 text-muted-foreground">Tre typiske situationer – og hvordan et simpelt budget kan skabe luft, overblik og ro. Tallene er eksempler.</p>
+    </div>
+
+    <div class="mt-10 grid gap-4 md:grid-cols-3">
+
+      <!-- Studerende -->
+      <div class="fade-up" style="transition-delay:0.0s">
+        <div class="h-full rounded-2xl border border-[hsl(var(--border))] bg-card shadow-sm p-6">
+          <div class="flex items-start justify-between gap-3 mb-4">
+            <div class="text-xl font-semibold">Studerende</div>
+            <span class="inline-flex rounded-2xl border border-[hsl(var(--border))] px-2.5 py-0.5 text-xs font-semibold bg-[hsl(var(--muted))] text-muted-foreground">Lavt råderum</span>
+          </div>
+          <div class="grid gap-3 sm:grid-cols-2 mb-4">
+            <div class="rounded-2xl border border-[hsl(var(--border))] bg-background/60 p-4">
+              <div class="text-xs font-semibold text-muted-foreground mb-2">Før</div>
+              <div class="grid gap-2 text-sm text-muted-foreground">
+                <div class="flex items-start gap-2"><span class="mt-1.5 inline-block h-1.5 w-1.5 rounded-full bg-foreground/60 shrink-0"></span>Mad 'flyder' (2.800 kr.)</div>
+                <div class="flex items-start gap-2"><span class="mt-1.5 inline-block h-1.5 w-1.5 rounded-full bg-foreground/60 shrink-0"></span>Streaming + småkøb (850 kr.)</div>
+                <div class="flex items-start gap-2"><span class="mt-1.5 inline-block h-1.5 w-1.5 rounded-full bg-foreground/60 shrink-0"></span>Ingen buffer</div>
+              </div>
+            </div>
+            <div class="rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--muted))]/20 p-4">
+              <div class="text-xs font-semibold text-muted-foreground mb-2">Efter</div>
+              <div class="grid gap-2 text-sm">
+                <div class="flex items-start gap-2"><i data-lucide="check" class="h-4 w-4 shrink-0 mt-0.5"></i><span class="text-muted-foreground">Mad sat til 2.200 kr.</span></div>
+                <div class="flex items-start gap-2"><i data-lucide="check" class="h-4 w-4 shrink-0 mt-0.5"></i><span class="text-muted-foreground">'Småting' til 400 kr.</span></div>
+                <div class="flex items-start gap-2"><i data-lucide="check" class="h-4 w-4 shrink-0 mt-0.5"></i><span class="text-muted-foreground">Buffer: 300 kr./md</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="rounded-2xl border border-[hsl(var(--border))] bg-background/60 p-4 mb-4">
+            <div class="text-sm font-medium">Resultat</div>
+            <div class="mt-1 text-sm text-muted-foreground">+1.050 kr. mere pr. måned</div>
+            <div class="mt-3 flex flex-wrap gap-2">
+              <span class="inline-flex rounded-2xl border border-[hsl(var(--border))] px-2.5 py-0.5 text-xs font-semibold bg-[hsl(var(--muted))] text-muted-foreground">Husleje</span>
+              <span class="inline-flex rounded-2xl border border-[hsl(var(--border))] px-2.5 py-0.5 text-xs font-semibold bg-[hsl(var(--muted))] text-muted-foreground">Mad</span>
+              <span class="inline-flex rounded-2xl border border-[hsl(var(--border))] px-2.5 py-0.5 text-xs font-semibold bg-[hsl(var(--muted))] text-muted-foreground">Transport</span>
+              <span class="inline-flex rounded-2xl border border-[hsl(var(--border))] px-2.5 py-0.5 text-xs font-semibold bg-[hsl(var(--muted))] text-muted-foreground">Småting</span>
+              <span class="inline-flex rounded-2xl border border-[hsl(var(--border))] px-2.5 py-0.5 text-xs font-semibold bg-[hsl(var(--muted))] text-muted-foreground">Buffer</span>
+            </div>
+          </div>
+          <a href="#contact" class="flex w-full items-center justify-center gap-2 rounded-md border border-[hsl(var(--border))] bg-background/60 px-4 py-2 text-sm font-medium hover:bg-[hsl(var(--muted))]/30 transition-colors">
+            Få et budget som dette <i data-lucide="arrow-right" class="h-4 w-4"></i>
+          </a>
+        </div>
+      </div>
+
+      <!-- Par -->
+      <div class="fade-up" style="transition-delay:0.05s">
+        <div class="h-full rounded-2xl border border-[hsl(var(--border))] bg-card shadow-sm p-6">
+          <div class="flex items-start justify-between gap-3 mb-4">
+            <div class="text-xl font-semibold">Par</div>
+            <span class="inline-flex rounded-2xl border border-[hsl(var(--border))] px-2.5 py-0.5 text-xs font-semibold bg-[hsl(var(--muted))] text-muted-foreground">Fælles økonomi</span>
+          </div>
+          <div class="grid gap-3 sm:grid-cols-2 mb-4">
+            <div class="rounded-2xl border border-[hsl(var(--border))] bg-background/60 p-4">
+              <div class="text-xs font-semibold text-muted-foreground mb-2">Før</div>
+              <div class="grid gap-2 text-sm text-muted-foreground">
+                <div class="flex items-start gap-2"><span class="mt-1.5 inline-block h-1.5 w-1.5 rounded-full bg-foreground/60 shrink-0"></span>Mad + takeaway (5.200 kr.)</div>
+                <div class="flex items-start gap-2"><span class="mt-1.5 inline-block h-1.5 w-1.5 rounded-full bg-foreground/60 shrink-0"></span>Abonnementer + småkøb (1.400 kr.)</div>
+                <div class="flex items-start gap-2"><span class="mt-1.5 inline-block h-1.5 w-1.5 rounded-full bg-foreground/60 shrink-0"></span>Ingen fælles buffer</div>
+              </div>
+            </div>
+            <div class="rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--muted))]/20 p-4">
+              <div class="text-xs font-semibold text-muted-foreground mb-2">Efter</div>
+              <div class="grid gap-2 text-sm">
+                <div class="flex items-start gap-2"><i data-lucide="check" class="h-4 w-4 shrink-0 mt-0.5"></i><span class="text-muted-foreground">Madbudget sat til 4.200 kr.</span></div>
+                <div class="flex items-start gap-2"><i data-lucide="check" class="h-4 w-4 shrink-0 mt-0.5"></i><span class="text-muted-foreground">Abonnementer ned til 700 kr.</span></div>
+                <div class="flex items-start gap-2"><i data-lucide="check" class="h-4 w-4 shrink-0 mt-0.5"></i><span class="text-muted-foreground">Buffer: 1.000 kr./md</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="rounded-2xl border border-[hsl(var(--border))] bg-background/60 p-4 mb-4">
+            <div class="text-sm font-medium">Resultat</div>
+            <div class="mt-1 text-sm text-muted-foreground">+1.700 kr. mere pr. måned</div>
+            <div class="mt-3 flex flex-wrap gap-2">
+              <span class="inline-flex rounded-2xl border border-[hsl(var(--border))] px-2.5 py-0.5 text-xs font-semibold bg-[hsl(var(--muted))] text-muted-foreground">Faste udgifter</span>
+              <span class="inline-flex rounded-2xl border border-[hsl(var(--border))] px-2.5 py-0.5 text-xs font-semibold bg-[hsl(var(--muted))] text-muted-foreground">Mad</span>
+              <span class="inline-flex rounded-2xl border border-[hsl(var(--border))] px-2.5 py-0.5 text-xs font-semibold bg-[hsl(var(--muted))] text-muted-foreground">Fælles mål</span>
+              <span class="inline-flex rounded-2xl border border-[hsl(var(--border))] px-2.5 py-0.5 text-xs font-semibold bg-[hsl(var(--muted))] text-muted-foreground">Sjove penge</span>
+              <span class="inline-flex rounded-2xl border border-[hsl(var(--border))] px-2.5 py-0.5 text-xs font-semibold bg-[hsl(var(--muted))] text-muted-foreground">Buffer</span>
+            </div>
+          </div>
+          <a href="#contact" class="flex w-full items-center justify-center gap-2 rounded-md border border-[hsl(var(--border))] bg-background/60 px-4 py-2 text-sm font-medium hover:bg-[hsl(var(--muted))]/30 transition-colors">
+            Få et budget som dette <i data-lucide="arrow-right" class="h-4 w-4"></i>
+          </a>
+        </div>
+      </div>
+
+      <!-- Familie -->
+      <div class="fade-up" style="transition-delay:0.10s">
+        <div class="h-full rounded-2xl border border-[hsl(var(--border))] bg-card shadow-sm p-6">
+          <div class="flex items-start justify-between gap-3 mb-4">
+            <div class="text-xl font-semibold">Familie</div>
+            <span class="inline-flex rounded-2xl border border-[hsl(var(--border))] px-2.5 py-0.5 text-xs font-semibold bg-[hsl(var(--muted))] text-muted-foreground">Mange udgifter</span>
+          </div>
+          <div class="grid gap-3 sm:grid-cols-2 mb-4">
+            <div class="rounded-2xl border border-[hsl(var(--border))] bg-background/60 p-4">
+              <div class="text-xs font-semibold text-muted-foreground mb-2">Før</div>
+              <div class="grid gap-2 text-sm text-muted-foreground">
+                <div class="flex items-start gap-2"><span class="mt-1.5 inline-block h-1.5 w-1.5 rounded-full bg-foreground/60 shrink-0"></span>Dagligvarer (8.500 kr.)</div>
+                <div class="flex items-start gap-2"><span class="mt-1.5 inline-block h-1.5 w-1.5 rounded-full bg-foreground/60 shrink-0"></span>Børneaktiviteter uden budget (2.200 kr.)</div>
+                <div class="flex items-start gap-2"><span class="mt-1.5 inline-block h-1.5 w-1.5 rounded-full bg-foreground/60 shrink-0"></span>Opsparing bliver glemt</div>
+              </div>
+            </div>
+            <div class="rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--muted))]/20 p-4">
+              <div class="text-xs font-semibold text-muted-foreground mb-2">Efter</div>
+              <div class="grid gap-2 text-sm">
+                <div class="flex items-start gap-2"><i data-lucide="check" class="h-4 w-4 shrink-0 mt-0.5"></i><span class="text-muted-foreground">Madbudget sat til 7.000 kr.</span></div>
+                <div class="flex items-start gap-2"><i data-lucide="check" class="h-4 w-4 shrink-0 mt-0.5"></i><span class="text-muted-foreground">Børnepost: 1.200 kr./md</span></div>
+                <div class="flex items-start gap-2"><i data-lucide="check" class="h-4 w-4 shrink-0 mt-0.5"></i><span class="text-muted-foreground">Opsparing: 2.000 kr./md automatisk</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="rounded-2xl border border-[hsl(var(--border))] bg-background/60 p-4 mb-4">
+            <div class="text-sm font-medium">Resultat</div>
+            <div class="mt-1 text-sm text-muted-foreground">+2.500 kr. mere + fast opsparing</div>
+            <div class="mt-3 flex flex-wrap gap-2">
+              <span class="inline-flex rounded-2xl border border-[hsl(var(--border))] px-2.5 py-0.5 text-xs font-semibold bg-[hsl(var(--muted))] text-muted-foreground">Mad</span>
+              <span class="inline-flex rounded-2xl border border-[hsl(var(--border))] px-2.5 py-0.5 text-xs font-semibold bg-[hsl(var(--muted))] text-muted-foreground">Børn</span>
+              <span class="inline-flex rounded-2xl border border-[hsl(var(--border))] px-2.5 py-0.5 text-xs font-semibold bg-[hsl(var(--muted))] text-muted-foreground">Transport</span>
+              <span class="inline-flex rounded-2xl border border-[hsl(var(--border))] px-2.5 py-0.5 text-xs font-semibold bg-[hsl(var(--muted))] text-muted-foreground">Fritid</span>
+              <span class="inline-flex rounded-2xl border border-[hsl(var(--border))] px-2.5 py-0.5 text-xs font-semibold bg-[hsl(var(--muted))] text-muted-foreground">Opsparing</span>
+            </div>
+          </div>
+          <a href="#contact" class="flex w-full items-center justify-center gap-2 rounded-md border border-[hsl(var(--border))] bg-background/60 px-4 py-2 text-sm font-medium hover:bg-[hsl(var(--muted))]/30 transition-colors">
+            Få et budget som dette <i data-lucide="arrow-right" class="h-4 w-4"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ───────────────────────── HOW IT WORKS ───────────────────────── -->
+  <section id="how" class="border-y border-[hsl(var(--border))] bg-[hsl(var(--muted))]/20">
+    <div class="mx-auto max-w-6xl px-4 py-16">
+      <div class="fade-up max-w-2xl">
+        <h2 class="text-3xl font-semibold tracking-tight">Sådan foregår det – 100% online (hurtigt og effektivt)</h2>
+        <p class="mt-3 text-muted-foreground">Hele forløbet foregår online og er designet til at være tids-effektivt: du forklarer behovet – vi bygger budgettet – og så gennemgår vi det sammen. Til sidst følger vi op, så budgettet også kan holdes i praksis.</p>
+      </div>
+
+      <div class="mt-10 grid gap-4 md:grid-cols-4">
+        <div class="fade-up rounded-2xl border border-[hsl(var(--border))] bg-background/60 p-5 shadow-sm" style="transition-delay:0.0s">
+          <div class="flex items-start justify-between">
+            <div class="text-sm text-muted-foreground">Trin</div>
+            <span class="inline-flex rounded-2xl border border-[hsl(var(--border))] bg-foreground px-2.5 py-0.5 text-xs font-semibold text-background">01</span>
+          </div>
+          <div class="mt-2 text-lg font-semibold">Budgetsamtale medfølger i alle pakker</div>
+          <div class="mt-2 text-sm text-muted-foreground">En kort indledende samtale er inkluderet i alle pakker, hvor vi afklarer din situation, mål og hvad du har brug for i dit budget.</div>
+        </div>
+        <div class="fade-up rounded-2xl border border-[hsl(var(--border))] bg-background/60 p-5 shadow-sm" style="transition-delay:0.05s">
+          <div class="flex items-start justify-between">
+            <div class="text-sm text-muted-foreground">Trin</div>
+            <span class="inline-flex rounded-2xl border border-[hsl(var(--border))] bg-foreground px-2.5 py-0.5 text-xs font-semibold text-background">02</span>
+          </div>
+          <div class="mt-2 text-lg font-semibold">Behovs-call (30 min)</div>
+          <div class="mt-2 text-sm text-muted-foreground">30 min via video: Du fortæller hvad du vil opnå, og vi indsamler de nødvendige tal (i det niveau du er tryg ved).</div>
+        </div>
+        <div class="fade-up rounded-2xl border border-[hsl(var(--border))] bg-background/60 p-5 shadow-sm" style="transition-delay:0.10s">
+          <div class="flex items-start justify-between">
+            <div class="text-sm text-muted-foreground">Trin</div>
+            <span class="inline-flex rounded-2xl border border-[hsl(var(--border))] bg-foreground px-2.5 py-0.5 text-xs font-semibold text-background">03</span>
+          </div>
+          <div class="mt-2 text-lg font-semibold">Budget leveres + gennemgang</div>
+          <div class="mt-2 text-sm text-muted-foreground">Vi udarbejder budgettet for dig og sender det. Derefter tager vi en kort gennemgang (30–45 min) og justerer sammen.</div>
+        </div>
+        <div class="fade-up rounded-2xl border border-[hsl(var(--border))] bg-background/60 p-5 shadow-sm" style="transition-delay:0.15s">
+          <div class="flex items-start justify-between">
+            <div class="text-sm text-muted-foreground">Trin</div>
+            <span class="inline-flex rounded-2xl border border-[hsl(var(--border))] bg-foreground px-2.5 py-0.5 text-xs font-semibold text-background">04</span>
+          </div>
+          <div class="mt-2 text-lg font-semibold">Opfølgning (15–20 min)</div>
+          <div class="mt-2 text-sm text-muted-foreground">Efter 2–4 uger: Vi tjekker om budgettet kan holdes i hverdagen – og ændrer det, hvis noget ikke fungerer. Opfølgning er inkluderet i Plus og Pro.</div>
+        </div>
+      </div>
+
+      <div class="fade-up mt-8 rounded-2xl border border-[hsl(var(--border))] bg-background/60 p-6 shadow-sm" style="transition-delay:0.1s">
+        <div class="text-lg font-semibold">Det kræver kun en computer eller telefon</div>
+        <div class="mt-1 text-sm text-muted-foreground">Du får et simpelt system du kan bruge med det samme – uden at møde fysisk.</div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ───────────────────────── PRICING ───────────────────────── -->
+  <section id="pricing" class="mx-auto max-w-6xl px-4 py-16">
+    <div class="fade-up flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+      <div class="max-w-2xl">
+        <h2 class="text-3xl font-semibold tracking-tight">Priser der er nemme at forstå</h2>
+        <p class="mt-3 text-muted-foreground">Vælg en løsning der passer til dit behov. Du kan altid opgradere senere.</p>
+      </div>
+      <!-- Billing toggle -->
+      <div class="flex items-center gap-2 rounded-2xl border border-[hsl(var(--border))] bg-background/60 p-2 shadow-sm self-start md:self-auto">
+        <button id="billing-monthly" class="billing-btn active rounded-xl px-4 py-2 text-sm font-medium bg-foreground text-background transition-colors">Måned</button>
+        <button id="billing-yearly" class="billing-btn rounded-xl px-4 py-2 text-sm font-medium hover:bg-[hsl(var(--muted))]/30 transition-colors">År</button>
+      </div>
+    </div>
+
+    <div class="mt-10 grid gap-4 md:grid-cols-3">
+
+      <!-- Starter -->
+      <div class="fade-up" style="transition-delay:0.0s">
+        <div class="h-full rounded-2xl border border-[hsl(var(--border))] bg-card shadow-sm p-6">
+          <div class="text-xl font-semibold mb-4">Starter</div>
+          <div class="mb-4">
+            <div class="text-4xl font-semibold">
+              <span class="price-starter">149</span> kr.
+              <span class="ml-2 text-base font-normal text-muted-foreground price-suffix">/md</span>
+            </div>
+            <div class="mt-1 text-sm text-muted-foreground">Inkl. moms</div>
+          </div>
+          <div class="space-y-2 mb-6">
+            <div class="flex items-center gap-2 text-sm"><i data-lucide="check" class="h-4 w-4"></i> Budgetskabelon + kategorier</div>
+            <div class="flex items-center gap-2 text-sm"><i data-lucide="check" class="h-4 w-4"></i> 1 behovs-call (30 min)</div>
+            <div class="flex items-center gap-2 text-sm"><i data-lucide="check" class="h-4 w-4"></i> Budget + gennemgang</div>
+            <div class="flex items-center gap-2 text-sm"><i data-lucide="check" class="h-4 w-4"></i> Ingen opfølgning</div>
+          </div>
+          <a href="/book/starter" class="flex w-full items-center justify-center gap-2 rounded-md border border-[hsl(var(--border))] bg-background/60 px-4 py-2 text-sm font-medium hover:bg-[hsl(var(--muted))]/30 transition-colors mb-3">
+            Vælg Starter <i data-lucide="arrow-right" class="h-4 w-4"></i>
+          </a>
+          <div class="text-xs text-muted-foreground">*Du kan opsige når som helst (måned), eller betale årligt for rabat.</div>
+        </div>
+      </div>
+
+      <!-- Plus (featured) -->
+      <div class="fade-up" style="transition-delay:0.05s">
+        <div class="h-full rounded-2xl border-2 border-foreground/30 bg-card shadow-sm p-6">
+          <div class="flex items-start justify-between mb-4">
+            <div class="text-xl font-semibold">Plus</div>
+            <span class="inline-flex rounded-2xl border border-[hsl(var(--border))] bg-foreground px-2.5 py-0.5 text-xs font-semibold text-background">Mest populær</span>
+          </div>
+          <div class="mb-4">
+            <div class="text-4xl font-semibold">
+              <span class="price-plus">299</span> kr.
+              <span class="ml-2 text-base font-normal text-muted-foreground price-suffix">/md</span>
+            </div>
+            <div class="mt-1 text-sm text-muted-foreground">Inkl. moms</div>
+          </div>
+          <div class="space-y-2 mb-6">
+            <div class="flex items-center gap-2 text-sm"><i data-lucide="check" class="h-4 w-4"></i> Alt i Starter</div>
+            <div class="flex items-center gap-2 text-sm"><i data-lucide="check" class="h-4 w-4"></i> Gennemgang (30–45 min)</div>
+            <div class="flex items-center gap-2 text-sm"><i data-lucide="check" class="h-4 w-4"></i> Opfølgning efter 2–4 uger</div>
+            <div class="flex items-center gap-2 text-sm"><i data-lucide="check" class="h-4 w-4"></i> Gæld/opsparing-plan</div>
+            <div class="flex items-center gap-2 text-sm"><i data-lucide="check" class="h-4 w-4"></i> Support i 60 dage</div>
+          </div>
+          <a href="/book/plus" class="flex w-full items-center justify-center gap-2 rounded-md bg-foreground px-4 py-2 text-sm font-medium text-background hover:opacity-90 transition-opacity mb-3">
+            Vælg Plus <i data-lucide="arrow-right" class="h-4 w-4"></i>
+          </a>
+          <div class="text-xs text-muted-foreground">*Du kan opsige når som helst (måned), eller betale årligt for rabat.</div>
+        </div>
+      </div>
+
+      <!-- Pro -->
+      <div class="fade-up" style="transition-delay:0.10s">
+        <div class="h-full rounded-2xl border border-[hsl(var(--border))] bg-card shadow-sm p-6">
+          <div class="text-xl font-semibold mb-4">Pro</div>
+          <div class="mb-4">
+            <div class="text-4xl font-semibold">
+              <span class="price-pro">599</span> kr.
+              <span class="ml-2 text-base font-normal text-muted-foreground price-suffix">/md</span>
+            </div>
+            <div class="mt-1 text-sm text-muted-foreground">Inkl. moms</div>
+          </div>
+          <div class="space-y-2 mb-6">
+            <div class="flex items-center gap-2 text-sm"><i data-lucide="check" class="h-4 w-4"></i> Alt i Plus</div>
+            <div class="flex items-center gap-2 text-sm"><i data-lucide="check" class="h-4 w-4"></i> Ekstra opfølgning</div>
+            <div class="flex items-center gap-2 text-sm"><i data-lucide="check" class="h-4 w-4"></i> Finpudsning af forbrugsvaner</div>
+            <div class="flex items-center gap-2 text-sm"><i data-lucide="check" class="h-4 w-4"></i> Support i 30 dage</div>
+          </div>
+          <a href="/book/pro" class="flex w-full items-center justify-center gap-2 rounded-md border border-[hsl(var(--border))] bg-background/60 px-4 py-2 text-sm font-medium hover:bg-[hsl(var(--muted))]/30 transition-colors mb-3">
+            Vælg Pro <i data-lucide="arrow-right" class="h-4 w-4"></i>
+          </a>
+          <div class="text-xs text-muted-foreground">*Du kan opsige når som helst (måned), eller betale årligt for rabat.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ───────────────────────── TESTIMONIALS ───────────────────────── -->
+  <section class="border-y border-[hsl(var(--border))] bg-[hsl(var(--muted))]/20">
+    <div class="mx-auto max-w-6xl px-4 py-16">
+      <div class="fade-up max-w-2xl">
+        <h2 class="text-3xl font-semibold tracking-tight">Det siger kunderne</h2>
+        <p class="mt-3 text-muted-foreground">Resultaterne handler sjældent om at "spare ekstremt" – men om ro, kontrol og realistiske valg.</p>
+      </div>
+      <div class="mt-10 grid gap-4 md:grid-cols-3">
+        <div class="fade-up h-full rounded-2xl border border-[hsl(var(--border))] bg-card shadow-sm p-6" style="transition-delay:0.0s">
+          <div class="font-semibold">Maja & Thomas</div>
+          <div class="text-sm text-muted-foreground mb-3">Par med fælles økonomi</div>
+          <div class="text-sm text-muted-foreground">"Vi gik fra kaos til overblik på én session. Nu ved vi præcis hvad vi kan bruge – og hvad vi sparer op."</div>
+        </div>
+        <div class="fade-up h-full rounded-2xl border border-[hsl(var(--border))] bg-card shadow-sm p-6" style="transition-delay:0.05s">
+          <div class="font-semibold">Sofie</div>
+          <div class="text-sm text-muted-foreground mb-3">Studerende</div>
+          <div class="text-sm text-muted-foreground">"Det var første gang et budget føltes realistisk. Kategorierne gav mening, og jeg holder det stadig."</div>
+        </div>
+        <div class="fade-up h-full rounded-2xl border border-[hsl(var(--border))] bg-card shadow-sm p-6" style="transition-delay:0.10s">
+          <div class="font-semibold">Ali</div>
+          <div class="text-sm text-muted-foreground mb-3">Småbørnsfar</div>
+          <div class="text-sm text-muted-foreground">"De små justeringer i forbruget gav hurtigt luft. Vi fik også en buffer, så uforudsete udgifter ikke vælter alt."</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ───────────────────────── FAQ ───────────────────────── -->
+  <section id="faq" class="mx-auto max-w-6xl px-4 py-16">
+    <div class="fade-up max-w-2xl">
+      <h2 class="text-3xl font-semibold tracking-tight">FAQ</h2>
+      <p class="mt-3 text-muted-foreground">De spørgsmål vi får oftest.</p>
+    </div>
+    <div class="mt-10 grid gap-4 md:grid-cols-2">
+      <div class="fade-up rounded-2xl border border-[hsl(var(--border))] bg-background/60 p-5 shadow-sm" style="transition-delay:0.0s">
+        <div class="flex items-start gap-3">
+          <i data-lucide="message-circle" class="mt-0.5 h-5 w-5 shrink-0"></i>
+          <div>
+            <div class="font-semibold">Skal jeg dele alle mine kontoudtog?</div>
+            <div class="mt-2 text-sm text-muted-foreground">Nej. Du bestemmer detaljeniveauet. Vi kan starte med faste udgifter og et simpelt overblik, og gøre det mere præcist senere.</div>
+          </div>
+        </div>
+      </div>
+      <div class="fade-up rounded-2xl border border-[hsl(var(--border))] bg-background/60 p-5 shadow-sm" style="transition-delay:0.03s">
+        <div class="flex items-start gap-3">
+          <i data-lucide="message-circle" class="mt-0.5 h-5 w-5 shrink-0"></i>
+          <div>
+            <div class="font-semibold">Kan I også hjælpe med gæld?</div>
+            <div class="mt-2 text-sm text-muted-foreground">Ja. Vi kan lave en plan for afdrag og samtidig sikre at budgettet stadig fungerer i hverdagen.</div>
+          </div>
+        </div>
+      </div>
+      <div class="fade-up rounded-2xl border border-[hsl(var(--border))] bg-background/60 p-5 shadow-sm" style="transition-delay:0.06s">
+        <div class="flex items-start gap-3">
+          <i data-lucide="message-circle" class="mt-0.5 h-5 w-5 shrink-0"></i>
+          <div>
+            <div class="font-semibold">Hvor lang tid tager det?</div>
+            <div class="mt-2 text-sm text-muted-foreground">Vi starter med en kort indledende samtale og derefter et 30 min behovs-call. Derefter leverer vi budgettet og gennemgår det sammen.</div>
+          </div>
+        </div>
+      </div>
+      <div class="fade-up rounded-2xl border border-[hsl(var(--border))] bg-background/60 p-5 shadow-sm" style="transition-delay:0.09s">
+        <div class="flex items-start gap-3">
+          <i data-lucide="message-circle" class="mt-0.5 h-5 w-5 shrink-0"></i>
+          <div>
+            <div class="font-semibold">Er det kun online?</div>
+            <div class="mt-2 text-sm text-muted-foreground">Ja, til at starte med kører vi 100% online. Det gør det fleksibelt og hurtigt.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ───────────────────────── CONTACT ───────────────────────── -->
+  <section id="contact" class="border-t border-[hsl(var(--border))] bg-[hsl(var(--muted))]/20">
+    <div class="mx-auto max-w-6xl px-4 py-16">
+      <div class="fade-up grid gap-10 md:grid-cols-2">
+        <div>
+          <h2 class="text-3xl font-semibold tracking-tight">Kontakt</h2>
+          <p class="mt-3 text-muted-foreground">Skriv kort hvad du vil have hjælp til – så svarer vi med forslag til næste skridt.</p>
+          <div class="mt-6 space-y-3">
+            <div class="rounded-2xl border border-[hsl(var(--border))] bg-background/60 p-4 shadow-sm">
+              <div class="flex items-center gap-2 font-medium"><i data-lucide="shield" class="h-4 w-4"></i> Fortrolighed</div>
+              <div class="mt-1 text-sm text-muted-foreground">Vi behandler dine oplysninger fortroligt og deler dem aldrig med tredjeparter.</div>
+            </div>
+            <div class="rounded-2xl border border-[hsl(var(--border))] bg-background/60 p-4 shadow-sm">
+              <div class="flex items-center gap-2 font-medium"><i data-lucide="lock" class="h-4 w-4"></i> Datasikkerhed</div>
+              <div class="mt-1 text-sm text-muted-foreground">Brug kun de tal du er tryg ved at dele. Du kan altid anonymisere.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="rounded-2xl border border-[hsl(var(--border))] bg-card shadow-sm p-6">
+          <div class="text-lg font-semibold mb-1">Ring til os</div>
+          <p class="text-sm text-muted-foreground mb-4">Du er altid velkommen til at ringe direkte – så finder vi hurtigt ud af, hvad der passer til din situation.</p>
+          <a href="tel:+4512345678" class="flex items-center gap-4 rounded-2xl border border-[hsl(var(--border))] bg-background/60 p-5 shadow-sm hover:bg-[hsl(var(--muted))]/30 transition-colors mb-3">
+            <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-[hsl(var(--border))] shadow-sm">
+              <i data-lucide="phone" class="h-5 w-5"></i>
+            </div>
+            <div>
+              <div class="text-lg font-semibold">+45 12 34 56 78</div>
+              <div class="text-sm text-muted-foreground">Man–fre, 9–17</div>
+            </div>
+          </a>
+          <div class="rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--muted))]/20 p-4 text-sm text-muted-foreground">
+            Foretrækker du at skrive? Send en e-mail til
+            <a href="mailto:hej@budgetbuddy.dk" class="font-medium text-foreground hover:underline">hej@budgetbuddy.dk</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="fade-up mt-10 rounded-2xl border border-[hsl(var(--border))] bg-background/60 p-6 shadow-sm" style="transition-delay:0.08s">
+        <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <div class="text-lg font-semibold">Klar til ro i økonomien?</div>
+            <div class="mt-1 text-sm text-muted-foreground">Book en budgetsamtale og få en plan for næste skridt.</div>
+          </div>
+          <a href="#pricing" class="inline-flex items-center gap-2 rounded-md bg-foreground px-6 py-3 text-sm font-medium text-background hover:opacity-90 transition-opacity">
+            Book <i data-lucide="arrow-right" class="h-4 w-4"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ───────────────────────── FOOTER ───────────────────────── -->
+  <footer class="border-t border-[hsl(var(--border))]">
+    <div class="mx-auto max-w-6xl px-4 py-10">
+      <div class="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+        <div class="flex items-center gap-2">
+          <div class="flex h-9 w-9 items-center justify-center rounded-2xl border border-[hsl(var(--border))] shadow-sm">
+            <i data-lucide="wallet" class="h-5 w-5"></i>
+          </div>
+          <div>
+            <div class="font-semibold">BudgetBuddy</div>
+            <div class="text-sm text-muted-foreground">Budget & overblik</div>
+          </div>
+        </div>
+        <div class="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
+          <a href="#solution" class="hover:text-foreground">Løsninger</a>
+          <a href="#examples" class="hover:text-foreground">Eksempler</a>
+          <a href="#how" class="hover:text-foreground">Sådan virker det</a>
+          <a href="#pricing" class="hover:text-foreground">Priser</a>
+          <a href="#faq" class="hover:text-foreground">FAQ</a>
+          <a href="#contact" class="hover:text-foreground">Kontakt</a>
+        </div>
+        <div class="text-sm text-muted-foreground">© <span id="footer-year"></span> BudgetBuddy. Alle rettigheder forbeholdes.</div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- ───────────────────────── CHATBOT ───────────────────────── -->
+  <div id="chatbot" class="fixed bottom-5 right-5 z-50 flex flex-col items-end gap-3">
+    <!-- Chat window -->
+    <div id="chat-window" class="hidden flex-col rounded-2xl border border-[hsl(var(--border))] bg-background shadow-xl" style="width:340px;height:480px;display:none;flex-direction:column">
+      <!-- Header -->
+      <div class="flex items-center justify-between rounded-t-2xl border-b border-[hsl(var(--border))] bg-foreground px-4 py-3 text-background">
+        <div class="flex items-center gap-2">
+          <i data-lucide="message-circle" class="h-4 w-4"></i>
+          <span class="text-sm font-semibold">BudgetBuddy AI</span>
+        </div>
+        <button id="chat-close" class="opacity-70 hover:opacity-100" aria-label="Luk chat">
+          <i data-lucide="x" class="h-4 w-4"></i>
+        </button>
+      </div>
+      <!-- Messages -->
+      <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-3"></div>
+      <!-- Input -->
+      <form id="chat-form" class="flex items-center gap-2 border-t border-[hsl(var(--border))] p-3">
+        <input id="chat-input" type="text" placeholder="Skriv et spørgsmål..." autocomplete="off"
+          class="flex-1 rounded-2xl border border-[hsl(var(--border))] bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-foreground/20" />
+        <button id="chat-send" type="submit" aria-label="Send"
+          class="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-foreground text-background hover:opacity-90 transition-opacity disabled:opacity-40">
+          <i data-lucide="arrow-right" class="h-4 w-4"></i>
+        </button>
+      </form>
+    </div>
+
+    <!-- Toggle button -->
+    <button id="chat-toggle" aria-label="Åbn chat"
+      class="flex h-12 w-12 items-center justify-center rounded-full bg-foreground text-background shadow-lg hover:opacity-90 transition-opacity">
+      <i data-lucide="message-circle" id="chat-toggle-icon" class="h-5 w-5"></i>
+    </button>
+  </div>
+
+
+  <!-- ───────────────────────── SCRIPTS ───────────────────────── -->
+  <script src="/js/main.js"></script>
+  <script src="/js/chatbot.js"></script>
+  <script>lucide.createIcons();</script>
+</body>
+</html>
